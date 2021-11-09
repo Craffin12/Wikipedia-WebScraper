@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from bs4 import BeautifulSoup
 from flask_cors import CORS
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -88,4 +89,5 @@ def wikiScraper(title: str, heading: str):
 
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5501))
     app.run()
