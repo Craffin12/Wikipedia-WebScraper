@@ -89,5 +89,4 @@ def wikiScraper(title: str, heading: str):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5501))
     app.run()
