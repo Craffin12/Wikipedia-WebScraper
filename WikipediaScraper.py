@@ -5,7 +5,7 @@ import requests
 
 app = Flask(__name__)
 
-cors = CORS(app)  # Prevents the raising of restrictions due to CORS
+CORS(app) # Prevents the raising of restrictions due to CORS
 
 """
 Used the official documentation 
