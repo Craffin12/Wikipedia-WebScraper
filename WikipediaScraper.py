@@ -5,7 +5,7 @@ import requests
 
 app = Flask(__name__)
 
-CORS(app) # Prevents the raising of restrictions due to CORS
+CORS(app)  # Prevents the raising of restrictions due to CORS
 
 """
 Used the official documentation 
@@ -88,4 +88,4 @@ def wikiScraper(title: str, heading: str):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=3021)
