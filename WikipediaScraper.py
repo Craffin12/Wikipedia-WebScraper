@@ -16,22 +16,16 @@ to research general beautifulsoup 4 methods. All code is my own.
 
 def headingChoice(heading, html):
     """
-    Navigates html object to heading. Allows for the choice of an overview
-    section. This is the paragraph/s right under page title. If a user provides
-    a heading that doesn't exist returns None.
+    Navigates html object to heading, if "Overview" is passed navigated to text
+    under title on Wikipedia Page and if no paragraph is found returns None.
     """
     if heading == "Overview":
+        # Find text right under title
         paragraph = html.find(id="mw-content-text")
-        if paragraph is None:
-            return paragraph
-        paragraph = paragraph.contents[0].contents[0]
+        return None if paragraph is None else paragraph.contents[0].contents[0]
     else:
         paragraph = html.find(id=heading)
-        if paragraph is None:
-            return paragraph
-        paragraph = paragraph.parent
-
-    return paragraph
+        return None if paragraph is None else paragraph.parent
 
 
 def paragraphScraper(paragraph):
@@ -44,41 +38,43 @@ def paragraphScraper(paragraph):
     while paragraph.find_next_sibling().name != "h2":
         paragraph = paragraph.find_next_sibling()
         if paragraph.name == "p" and paragraph.text != '\n':
+            # label paragraph numbers
             collection["paragraph{}".format(count)] = paragraph.text
             count += 1
-
     return collection
+
+
+def handleNoPageError():
+    """Handles if there is not wikipedia page found"""
+    paragraphDict = {}
+    paragraphDict["err"] = "Title doesn't exist for a Wikipedia Page"
+    return paragraphDict
+
+
+def handleNoHeadingError():
+    """Handles if there is no heading on current wikipedia page"""
+    paragraphDict = {}
+    paragraphDict["err"] = "Heading Not Found On Requested Page"
+    return paragraphDict
 
 
 def wikipediaScraper(title, heading):
     """
-    Takes in a title that is associated with a Wikipedia page. Takes
-    in a heading for an h2 heading on that page. Returns an error if heading
-    doesn't exist, a collection of paragraphs if not.
+    Takes in a title for an ingredient and a heading (Overview/History), scrapes text
+    off of Wikipedia page that corresponds to title/headign combo and returns text in a dictionary.
     """
-    # Change spaces to _ which is used url
-    url = 'https://en.wikipedia.org/wiki/' + title.replace(" ", "_")
+    url = 'https://en.wikipedia.org/wiki/' + \
+        title.replace(" ", "_")  # Change spaces to _ for url
     heading = heading.replace(" ", "_")
-
-    res = requests.get(url)
-
-    paragraphCollection = {}  # Will hold response for user
-
-    if res.status_code == 404:
-        paragraphCollection["err"] = "Title doesn't exist for a Wikipedia Page"
-        return paragraphCollection
-
-    html = BeautifulSoup(res.content,
-                         "html.parser")  # Set up html object to parse
-
-    paragraph = headingChoice(heading, html)
-
-    if paragraph is None:
-        paragraphCollection["err"] = "Heading Not Found On Requested Page"
-        return paragraphCollection
-    else:
-        paragraphCollection = paragraphScraper(paragraph)
-        return paragraphCollection
+    resp = requests.get(url)  # get content of page
+    if resp.status_code == 404:
+        return handleNoPageError()  # If wiki page doesnt exist
+    # Set up html object to parse
+    htmlContent = BeautifulSoup(resp.text, "html.parser")
+    # Target h2 tag on page for heading
+    paragraph = headingChoice(heading, htmlContent)
+    # If no paragraph returned, handle "error" else scrape all paragraphs under heading
+    return handleNoHeadingError() if paragraph is None else paragraphScraper(paragraph)
 
 
 @app.route('/wikiScraper/<string:title>/<string:heading>', methods=['Get'])
