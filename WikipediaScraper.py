@@ -61,10 +61,11 @@ def wikipediaScraper(title, heading):
         title.replace(" ", "_")  # Change spaces to _ for url
     heading = heading.replace(" ", "_")
     resp = requests.get(url)  # get content of page
+    resp = resp.text
     if resp.status_code == 404:
         return handleNoPageError()  # If wiki page doesnt exist
     # Set up html object to parse
-    htmlContent = BeautifulSoup(resp.text, "html.parser")
+    htmlContent = BeautifulSoup(resp, "html.parser")
     # Target h2 tag on page for heading
     paragraph = headingChoice(heading, htmlContent)
     # If no paragraph returned, handle "error" else scrape all paragraphs under heading
