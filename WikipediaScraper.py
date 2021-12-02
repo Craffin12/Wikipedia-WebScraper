@@ -13,7 +13,6 @@ https://beautiful-soup-4.readthedocs.io/en/latest/
 to research general beautifulsoup 4 methods. All code is my own.
 """
 
-
 def headingChoice(heading, html):
     """
     Navigates html object to heading, if "Overview" is passed navigated to text
@@ -26,7 +25,6 @@ def headingChoice(heading, html):
     else:
         paragraph = html.find(id=heading)
         return None if paragraph is None else paragraph.parent
-
 
 def paragraphScraper(paragraph):
     """
@@ -43,20 +41,17 @@ def paragraphScraper(paragraph):
             count += 1
     return collection
 
-
 def handleNoPageError():
     """Handles if there is not wikipedia page found"""
     paragraphDict = {}
     paragraphDict["err"] = "Title doesn't exist for a Wikipedia Page"
     return paragraphDict
 
-
 def handleNoHeadingError():
     """Handles if there is no heading on current wikipedia page"""
     paragraphDict = {}
     paragraphDict["err"] = "Heading Not Found On Requested Page"
     return paragraphDict
-
 
 def wikipediaScraper(title, heading):
     """
@@ -76,12 +71,10 @@ def wikipediaScraper(title, heading):
     # If no paragraph returned, handle "error" else scrape all paragraphs under heading
     return handleNoHeadingError() if paragraph is None else paragraphScraper(paragraph)
 
-
 @app.route('/wikiScraper/<string:title>/<string:heading>', methods=['Get'])
 def wikiScraper(title: str, heading: str):
     response = wikipediaScraper(title, heading)
     return jsonify(response)
-
 
 if __name__ == '__main__':
     app.run(port=3021)
