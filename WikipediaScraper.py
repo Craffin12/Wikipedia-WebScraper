@@ -19,8 +19,7 @@ def headingChoice(heading, html):
     under title on Wikipedia Page and if no paragraph is found returns None.
     """
     if heading == "Overview":
-        # Find text right under title
-        paragraph = html.find(id="mw-content-text")
+        paragraph = html.find(id="mw-content-text")  # Find text right under title
         return None if paragraph is None else paragraph.contents[0].contents[0]
     else:
         paragraph = html.find(id=heading)
