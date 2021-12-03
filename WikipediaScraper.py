@@ -3,33 +3,35 @@ from bs4 import BeautifulSoup
 from flask_cors import CORS
 import requests
 
-app = Flask(__name__)
+application = Flask(__name__)
 
-CORS(app)  # Prevents the raising of restrictions due to CORS
+CORS(application)  # Prevents the raising of restrictions due to CORS
 
 """
 Used the official documentation 
 https://beautiful-soup-4.readthedocs.io/en/latest/
 to research general beautifulsoup 4 methods. All code is my own.
+
+Used the offical documentation
+https://docs.python-requests.org/en/latest/user/quickstart/
+to learn how to use requests and to learn about response.text.
+All code is my own.
 """
 
 def headingChoice(heading, html):
-    """
-    Navigates html object to heading, if "Overview" is passed navigated to text
-    under title on Wikipedia Page and if no paragraph is found returns None.
-    """
+    """Navigates html object to heading, if "Overview" is passed navigated to text
+    under title on Wikipedia Page and if no paragraph is found returns None."""
     if heading == "Overview":
-        paragraph = html.find(id="mw-content-text")  # Find text right under title
+        # Find text right under title
+        paragraph = html.find(id="mw-content-text")
         return None if paragraph is None else paragraph.contents[0].contents[0]
     else:
         paragraph = html.find(id=heading)
         return None if paragraph is None else paragraph.parent
 
 def paragraphScraper(paragraph):
-    """
-    Creates a dictionary that holds each paragraph between heading (h2 tag)
-    and next heading (h2 tag).
-    """
+    """ Creates a dictionary that holds each paragraph between heading (h2 tag)
+    and next heading (h2 tag). Returns dictionary."""
     collection = {}
     count = 1
     while paragraph.find_next_sibling().name != "h2":
@@ -40,41 +42,33 @@ def paragraphScraper(paragraph):
             count += 1
     return collection
 
-def handleNoPageError():
-    """Handles if there is not wikipedia page found"""
+def handleNoHeadingOrPageError():
+    """Handles if there is no heading on current wikipedia page or the page doesn't exist"""
     paragraphDict = {}
-    paragraphDict["err"] = "Title doesn't exist for a Wikipedia Page"
+    paragraphDict["err"] = "Heading or Page Not Found!"
     return paragraphDict
 
-def handleNoHeadingError():
-    """Handles if there is no heading on current wikipedia page"""
-    paragraphDict = {}
-    paragraphDict["err"] = "Heading Not Found On Requested Page"
-    return paragraphDict
+def requestPageGetHtml(url):
+    """Requests text information from url page and returns None if status code is 404 or 
+    an Beautiful soup object that contains page's html"""
+    resp = requests.get(url)
+    return None if resp.status_code == 404 else BeautifulSoup(resp.text, "html.parser")
 
 def wikipediaScraper(title, heading):
-    """
-    Takes in a title for an ingredient and a heading (Overview/History), scrapes text
-    off of Wikipedia page that corresponds to title/headign combo and returns text in a dictionary.
-    """
-    url = 'https://en.wikipedia.org/wiki/' + \
-        title.replace(" ", "_")  # Change spaces to _ for url
+    """Takes in a title for an ingredient and a heading (Overview/History), scrapes text
+    off Wikipedia page that corresponds to title/headign combo and returns text in dictionary."""
+    url = "https://en.wikipedia.org/wiki/" + title.replace(" ", "_")  # Change spaces to _ for url
     heading = heading.replace(" ", "_")
-    resp = requests.get(url)  # get content of page
-    resp = resp.text
-    if resp.status_code == 404:
-        return handleNoPageError()  # If wiki page doesnt exist
-    # Set up html object to parse
-    htmlContent = BeautifulSoup(resp, "html.parser")
-    # Target h2 tag on page for heading
-    paragraph = headingChoice(heading, htmlContent)
+    htmlContent = requestPageGetHtml(url)
+    # Target h2 tag on page for heading or None if BeautifulSoup object was None
+    paragraph = headingChoice(heading, htmlContent) if htmlContent is not None else htmlContent
     # If no paragraph returned, handle "error" else scrape all paragraphs under heading
-    return handleNoHeadingError() if paragraph is None else paragraphScraper(paragraph)
+    return handleNoHeadingOrPageError() if paragraph is None else paragraphScraper(paragraph)
 
-@app.route('/wikiScraper/<string:title>/<string:heading>', methods=['Get'])
+@application.route("/wikiScraper/<string:title>/<string:heading>", methods=["Get"])
 def wikiScraper(title: str, heading: str):
-    response = wikipediaScraper(title, heading)
-    return jsonify(response)
+    toSend = wikipediaScraper(title, heading)
+    return jsonify(toSend)
 
-if __name__ == '__main__':
-    app.run(port=3021)
+if __name__ == "__main__":
+    application.run("127.0.0.1", 3021)
